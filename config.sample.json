@@ -5,10 +5,16 @@
 
   "REGEX_FILE_NAME" : /[a-z0-9]{11}\.sgf/,
 
+  "BUCKETNAME" : "__________",
+
+  "USERNAME" : "________",
+
+  "PASSWORD" : "________",
 
   "WALK_OPTIONS" : {
     "followLinks" : false
   }
+
 }
 
 

@@ -15,6 +15,7 @@ logger = require "dev-logger"
 _ = require "underscore"
 async = require "async"
 checksum = require "checksum"
+upyun = require "upyun"
 
 ## settings scarfollding
 
@@ -72,6 +73,16 @@ assetsKV = {}
 
 startAt = Date.now()
 
+# create upyun client
+client = upyun settings.BUCKETNAME, settings.USERNAME, settings.PASSWORD
+
+# make sure the given upyun account is authorized
+client.getUsage (err, status, data)->
+  unless status is 200
+    throw(new Error("Upyun account (#{settings.USERNAME}:#{settings.PASSWORD}@#{settings.BUCKETNAME}) failed authorization"))
+    process.exit(1)
+  return
+
 # process an individual asset
 processAsset = (fileName, next)->
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
@@ -83,7 +94,12 @@ processAsset = (fileName, next)->
       return
 
     logger.log "[upsyncer::processAsset] fileName:#{fileName}, fullPath:#{fullPath}, local sum:#{sumLocal}"
-    next(null, sumLocal)
+
+    client.downloadFile fileName, (err, status, data) ->
+      logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}, data:#{data}"
+      next(null, sumLocal)
+      return
+
   return
 
 generateResult = (err, results)->

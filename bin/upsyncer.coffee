@@ -14,6 +14,7 @@ walk = require "walk"
 logger = require "dev-logger"
 _ = require "underscore"
 async = require "async"
+checksum = require "checksum"
 
 ## settings scarfollding
 
@@ -71,9 +72,18 @@ assetsKV = {}
 
 startAt = Date.now()
 
-processAsset = (fileName, callback)->
-  logger.log "[upsyncer::processAsset] fileName:#{fileName}"
-  callback(null, fileName+"---done")
+# process an individual asset
+processAsset = (fileName, next)->
+  fullPath = "#{assetsKV[fileName]}/#{fileName}"
+
+  # check local sum
+  checksum.file fullPath, (err, sumLocal)->
+    if err?
+      next("[upsyncer::processAsset] fail to check local sum. fullPath:#{fullPath}, err:#{err}")
+      return
+
+    logger.log "[upsyncer::processAsset] fileName:#{fileName}, fullPath:#{fullPath}, local sum:#{sumLocal}"
+    next(null, sumLocal)
   return
 
 generateResult = (err, results)->

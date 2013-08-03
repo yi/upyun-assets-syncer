@@ -87,18 +87,60 @@ client.getUsage (err, status, data)->
 processAsset = (fileName, next)->
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
 
+  content = fs.readFileSync fullPath
+
+  sumLocal = checksum content.toString('hex')
+
+  client.downloadFile fileName, (err, status, data) ->
+
+    logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
+
+    switch status
+      when 404
+        # file not on cdn, so upload it
+        client.uploadFile fileName, content, (err, status, data)->
+          if err? or status isnt 200
+            logger.error "[upsyncer::processAsset::upload] failed. err:#{err}, status:#{status}"
+            next null,
+              'status' : status
+              'fileName' : fileName
+              'action' : 'upload'
+              'err' : err
+          else
+            logger.info "[upsyncer::processAsset::upload] put asset:#{fileName}"
+            next null
+          return
+
+      when 200
+        # file exist on cdn, skip
+        logger.log "[upsyncer::processAsset::upload] skip asset:#{fileName}"
+        next null
+      else
+        # unrecoginsed status code
+        next("unrecoginsed status code:#{status}")
+
+    return
+
+
   # check local sum
-  checksum.file fullPath, (err, sumLocal)->
-    if err?
-      next("[upsyncer::processAsset] fail to check local sum. fullPath:#{fullPath}, err:#{err}")
-      return
+  #checksum.file fullPath, (err, sumLocal)->
+    #if err?
+      #next("[upsyncer::processAsset] fail to check local sum. fullPath:#{fullPath}, err:#{err}")
+      #return
 
-    logger.log "[upsyncer::processAsset] fileName:#{fileName}, fullPath:#{fullPath}, local sum:#{sumLocal}"
+    #logger.log "[upsyncer::processAsset] fileName:#{fileName}, fullPath:#{fullPath}, local sum:#{sumLocal}"
 
-    client.downloadFile fileName, (err, status, data) ->
-      logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}, data:#{data}"
-      next(null, sumLocal)
-      return
+    #client.downloadFile fileName, (err, status, data) ->
+
+      #switch status
+        #when 404
+          ## file not on cdn, so upload it
+          #client.
+
+
+      #logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}, data:#{data}"
+      #next(null, sumLocal)
+      #return
 
   return
 

@@ -13,6 +13,7 @@ p = require "commander"
 walk = require "walk"
 logger = require "dev-logger"
 _ = require "underscore"
+async = require "async"
 
 ## settings scarfollding
 
@@ -70,6 +71,16 @@ assetsKV = {}
 
 startAt = Date.now()
 
+processAsset = (fileName, callback)->
+  logger.log "[upsyncer::processAsset] fileName:#{fileName}"
+  callback(null, fileName+"---done")
+  return
+
+generateResult = (err, results)->
+  logger.log "[upsyncer::generateResult] results:#{results}, err:#{err}"
+  process.exit(0)
+  return
+
 ## starting job
 logger.log "[cdn-syncer::start] find all sgf files from #{settings.LOCAL_DEPOT_ROOT}"
 
@@ -98,8 +109,12 @@ walker.on "errors", (root, nodeStatsArray, next) ->
   return
 
 walker.on "end", ->
-  logger.log "[cdn-syncer::list file] file #{_.keys(assetsKV).length} assets, time spent:#{Date.now() - startAt} ms"
-  process.exit(0)
+  assetsList = _.keys assetsKV
+  logger.log "[cdn-syncer::list file] file #{assetsList.length} assets, time spent:#{Date.now() - startAt} ms"
+  #process.exit(0)
+
+  async.map(assetsList, processAsset, generateResult)
+
   return
 
 

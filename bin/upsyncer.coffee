@@ -28,6 +28,9 @@ settings =
   WALK_OPTIONS :
     'followLinks' : false
 
+  # True: will re-upload local asset if md5 not match
+  UPLOAD_NEWLY_ASSET : true
+
   # reg exp pattern for valid asset file name
   #REGEX_FILE_NAME : /[a-z0-9]{11}\.sgf/
   REGEX_FILE_NAME : null
@@ -83,41 +86,62 @@ client.getUsage (err, status, data)->
     process.exit(1)
   return
 
+# upload an individual asset to upyun
+uploadAsset = (fileName, contentLocal, next)->
+  client.uploadFile fileName, contentLocal, (err, status, data)->
+    if err? or status isnt 200
+      #logger.error "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
+      next "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
+    else
+      logger.info "[upsyncer::processAsset::upload] put asset:#{fileName}"
+      next null,
+        'status' : status
+        'fileName' : fileName
+        'action' : 'upload'
+        'err' : err
+    return
+  return
+
 # process an individual asset
 processAsset = (fileName, next)->
+
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
 
-  content = fs.readFileSync fullPath
+  contentLocal = fs.readFileSync fullPath
 
-  sumLocal = checksum content.toString('hex')
+  sumLocal = checksum(contentLocal.toString('binary'))
 
-  client.downloadFile fileName, (err, status, data) ->
+  client.downloadFile fileName, (err, status, contentRemote) ->
 
-    logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
+    logger.info "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
 
     switch status
       when 404
-        # file not on cdn, so upload it
-        client.uploadFile fileName, content, (err, status, data)->
-          if err? or status isnt 200
-            logger.error "[upsyncer::processAsset::upload] failed. err:#{err}, status:#{status}"
-            next null,
-              'status' : status
-              'fileName' : fileName
-              'action' : 'upload'
-              'err' : err
-          else
-            logger.info "[upsyncer::processAsset::upload] put asset:#{fileName}"
-            next null
-          return
+        uploadAsset(fileName, contentLocal, next)
 
       when 200
         # file exist on cdn, skip
-        logger.log "[upsyncer::processAsset::upload] skip asset:#{fileName}"
-        next null
+        unless settings.UPLOAD_NEWLY_ASSET
+          logger.log "[upsyncer::processAsset::upload] skip asset:#{fileName}"
+          next null
+
+        sumRemote = checksum(contentRemote)
+        # NOTE:
+        #   contentRemote is binary data presented in String!
+        # ty 2013-08-04
+
+        if sumRemote is sumLocal
+          logger.log "[upsyncer::processAsset::upload] ignore identical asset:#{fileName}"
+          next null
+        else
+          logger.log "[upsyncer::processAsset::upload] upload diff asset:#{fileName}, lengthLocal:#{contentLocal.length}, lengthRemote:#{contentRemote.length}, iden:#{contentLocal.length is contentRemote.length}, sumLocal:#{sumLocal}, sumRemote:#{sumRemote}"
+          #logger.log "[upsyncer::method] contentLocal:#{Buffer.isBuffer(contentLocal)}"
+          #logger.log "[upsyncer::method] contentRemot:#{typeof(contentRemote)}"
+          uploadAsset(fileName, contentLocal, next)
+
       else
         # unrecoginsed status code
-        next("unrecoginsed status code:#{status}")
+        next("unrecoginsed status code:#{status}, fileName:#{fileName}")
 
     return
 

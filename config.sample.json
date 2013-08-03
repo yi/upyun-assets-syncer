@@ -11,6 +11,8 @@
 
   "PASSWORD" : "________",
 
+  "UPLOAD_NEWLY_ASSET" : true,
+
   "WALK_OPTIONS" : {
     "followLinks" : false
   }

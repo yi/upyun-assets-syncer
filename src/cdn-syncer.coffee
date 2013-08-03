@@ -30,13 +30,22 @@ startAt = Date.now()
 
 logger.log "[cdn-syncer::start] find all sgf files from #{env.LOCAL_DEPOT_ROOT}"
 
+# listing assets files
 walker = walk.walk(env.LOCAL_DEPOT_ROOT, env.WALK_OPTIONS)
 
 walker.on "file", (root, fileStats, next) ->
   fileName = fileStats.name
   #logger.log "[cdn-syncer::on file] name:#{fileName}, root:#{root}"
   #console.dir fileStats
-  assetsKV[fileName] = root
+
+  unless env.REGEX_FILE_NAME
+    assetsKV[fileName] = root
+  else
+    if env.REGEX_FILE_NAME.test(fileName)
+      assetsKV[fileName] = root
+    else
+      logger.warn "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
+
   next()
   return
 

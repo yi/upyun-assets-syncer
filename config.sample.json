@@ -1,5 +1,10 @@
 {
+
   "LOCAL_DEPOT_ROOT" : "/home/ty/Downloads/kkddd/bin",
+
+
+  "REGEX_FILE_NAME" : /[a-z0-9]{11}\.sgf/,
+
 
   "WALK_OPTIONS" : {
     "followLinks" : false

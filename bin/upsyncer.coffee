@@ -174,8 +174,15 @@ processAssetNoComprison = (fileName, next)->
 
   return
 
+# report working results
 generateResult = (err, results)->
-  logger.log "[upsyncer::generateResult] results:#{results}, err:#{err}"
+  ids = []
+  for entry in results
+    if entry? and entry.fileName?
+      ids.push entry.fileName
+
+  logger.info "[upsyncer::generateResult] SYNC COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset uploaded:#{ids}"
+
   process.exit(0)
   return
 

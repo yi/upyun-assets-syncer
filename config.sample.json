@@ -11,7 +11,7 @@
 
   "PASSWORD" : "________",
 
-  "REVISION_SENSITIVE" : false,
+  "REVISION_SENSITIVE" : true,
 
   "PARALLELY" : true,
 

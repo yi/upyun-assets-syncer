@@ -70,6 +70,10 @@ else
   logger.error "[cdn-syncer::init] missing configuration file, please use -c"
   process.exit(1)
 
+logger.setLevel(if settings.VERBOSE then logger.LOG else logger.INFO)
+logger.info "[upsyncer] start synce with following settings, at #{new Date}"
+console.log settings
+
 
 ## runtime vars
 assetsKV = {}
@@ -88,6 +92,8 @@ client.getUsage (err, status, data)->
 
 # upload an individual asset to upyun
 uploadAsset = (fileName, contentLocal, next)->
+  logger.log "[upsyncer::uploadAsset] fileName:#{fileName}"
+
   client.uploadFile fileName, contentLocal, (err, status, data)->
     if err? or status isnt 200
       #logger.error "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
@@ -104,6 +110,7 @@ uploadAsset = (fileName, contentLocal, next)->
 
 # process an individual asset
 processAsset = (fileName, next)->
+  logger.info "[upsyncer::processAsset] fileName:#{fileName}"
 
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
 
@@ -113,7 +120,7 @@ processAsset = (fileName, next)->
 
   client.downloadFile fileName, (err, status, contentRemote) ->
 
-    logger.info "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
+    logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
 
     switch status
       when 404
@@ -145,26 +152,25 @@ processAsset = (fileName, next)->
 
     return
 
+  return
 
-  # check local sum
-  #checksum.file fullPath, (err, sumLocal)->
-    #if err?
-      #next("[upsyncer::processAsset] fail to check local sum. fullPath:#{fullPath}, err:#{err}")
-      #return
+# process an individual asset
+processAssetNoComprison = (fileName, next)->
+  logger.info "[upsyncer::processAssetNoComprison] fileName:#{fileName}"
 
-    #logger.log "[upsyncer::processAsset] fileName:#{fileName}, fullPath:#{fullPath}, local sum:#{sumLocal}"
+  client.checkFileExistence fileName, (err, isExist) ->
+    logger.log "[upsyncer::processAssetNoComprison] err:#{err}, isExist:#{isExist}, fileName:#{fileName}"
 
-    #client.downloadFile fileName, (err, status, data) ->
+    console.trace() if err?
+    if isExist
+      logger.log "[upsyncer::processAssetNoComprison] skip existing asset:#{fileName}"
+      next(null)
+      return
+    else
+      fullPath = "#{assetsKV[fileName]}/#{fileName}"
+      uploadAsset(fileName, fs.readFileSync(fullPath), next)
 
-      #switch status
-        #when 404
-          ## file not on cdn, so upload it
-          #client.
-
-
-      #logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}, data:#{data}"
-      #next(null, sumLocal)
-      #return
+    return
 
   return
 
@@ -205,7 +211,14 @@ walker.on "end", ->
   logger.log "[cdn-syncer::list file] file #{assetsList.length} assets, time spent:#{Date.now() - startAt} ms"
   #process.exit(0)
 
-  async.map(assetsList, processAsset, generateResult)
+  processer = if settings.REVISION_SENSITIVE then processAsset else processAssetNoComprison
+
+  if settings.PARALLELY
+    # the faster way
+    async.map(assetsList, processer, generateResult)
+  else
+    # series way for easy error checking
+    async.mapSeries(assetsList, processer, generateResult)
 
   return
 

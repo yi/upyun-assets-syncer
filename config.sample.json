@@ -11,7 +11,11 @@
 
   "PASSWORD" : "________",
 
-  "UPLOAD_NEWLY_ASSET" : true,
+  "REVISION_SENSITIVE" : false,
+
+  "PARALLELY" : true,
+
+  "VERBOSE" : false,
 
   "WALK_OPTIONS" : {
     "followLinks" : false

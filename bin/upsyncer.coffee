@@ -42,8 +42,13 @@ settings =
     #data = JSON.parse(fs.readFileSync(filePath))
     data = fs.readFileSync(filePath).toString()
     #logger.log "[environment::method] data:#{data}"
-    data = eval("function x(){ return " + data + "; }")
-    data = x()
+    try
+      data = eval("function x(){ return " + data + "; }")
+      data = x()
+    catch err
+      logger.error "[upsyncer::settings::load] bad configuration json file, err:#{err}, input json:#{data}"
+      process.exit(1)
+      return
 
     # NOTE:
     #   why use eval, rather then JSON.parse()
@@ -61,6 +66,7 @@ settings =
 ## updating args
 p.version('0.1.0')
   .option('-c, --config-file [FILE]', 'Configuration json file')
+  .option('-t, --test-drive', 'list all local assets which should be synced withouth uploading them to CDN')
   .parse(process.argv)
 
 if p.configFile
@@ -93,6 +99,12 @@ client.getUsage (err, status, data)->
 # upload an individual asset to upyun
 uploadAsset = (fileName, contentLocal, next)->
   logger.log "[upsyncer::uploadAsset] fileName:#{fileName}"
+
+  if p.testDrive
+    next null,
+      'fileName' : fileName
+      'action' : 'testdrive'
+    return
 
   client.uploadFile fileName, contentLocal, (err, status, data)->
     if err? or status isnt 200
@@ -181,7 +193,10 @@ generateResult = (err, results)->
     if entry? and entry.fileName?
       ids.push entry.fileName
 
-  logger.info "[upsyncer::generateResult] SYNC COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset uploaded:#{ids}"
+  unless p.testDrive
+    logger.info "[upsyncer::generateResult] SYNC COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset uploaded:#{ids}"
+  else
+    logger.info "[upsyncer::generateResult] CHECKING COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset should be synced:#{ids}"
 
   process.exit(0)
   return

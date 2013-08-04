@@ -84,6 +84,10 @@ console.log settings
 ## runtime vars
 assetsKV = {}
 
+countAssets = 0
+
+countProgress = 0
+
 startAt = Date.now()
 
 # create upyun client
@@ -122,7 +126,7 @@ uploadAsset = (fileName, contentLocal, next)->
 
 # process an individual asset
 processAsset = (fileName, next)->
-  logger.info "[upsyncer::processAsset] fileName:#{fileName}"
+  logger.info "[upsyncer::processAsset] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
 
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
 
@@ -168,7 +172,7 @@ processAsset = (fileName, next)->
 
 # process an individual asset
 processAssetNoComprison = (fileName, next)->
-  logger.info "[upsyncer::processAssetNoComprison] fileName:#{fileName}"
+  logger.info "[upsyncer::processAssetNoComprison] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
 
   client.checkFileExistence fileName, (err, isExist) ->
     logger.log "[upsyncer::processAssetNoComprison] err:#{err}, isExist:#{isExist}, fileName:#{fileName}"
@@ -230,7 +234,10 @@ walker.on "errors", (root, nodeStatsArray, next) ->
 
 walker.on "end", ->
   assetsList = _.keys assetsKV
-  logger.log "[cdn-syncer::list file] file #{assetsList.length} assets, time spent:#{Date.now() - startAt} ms"
+  countAssets = assetsList.length
+  countProgress = 0
+
+  logger.log "[cdn-syncer::list file] file #{countAssets} assets, time spent:#{Date.now() - startAt} ms"
   #process.exit(0)
 
   processer = if settings.REVISION_SENSITIVE then processAsset else processAssetNoComprison

@@ -1,31 +1,31 @@
 {
   "name": "upyun-assets-syncer",
-  "description": "a configurable node script to synce local assets to upyun cdn, compared via md5",
+  "description": "a configurable node script to synce local assets to upyun cdn, compared by md5. 一个可配置的又拍云素材同步工具，通过MD5比对进行增量同步",
   "version": "0.1.0",
-  "homepage": "na",
+  "homepage": "https://github.com/yi/upyun-assets-syncer",
   "author": {
     "name": "yi",
     "email": "yi2004@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "na"
+    "url": "https://github.com/yi/upyun-assets-syncer.git"
   },
   "bugs": {
-    "url": "na"
+    "url": "https://github.com/yi/upyun-assets-syncer/issues"
   },
   "licenses": [
     {
-      "type": "na",
-      "url": "na/blob/master/LICENSE-na"
+      "type": "MIT",
+      "url": "https://github.com/yi/upyun-assets-syncer/blob/master/LICENSE"
     }
   ],
-  "main": "lib/cdn-syncer",
+  "main": "./bin/upsyncer.coffee",
+  "bin": {
+    "upsyncer": "./bin/upsyncer.coffee"
+  },
   "engines": {
     "node": ">= 0.8.0"
-  },
-  "scripts": {
-    "test": "grunt nodeunit"
   },
   "dependencies" : {
     "walk": "~2.2.1",
@@ -38,5 +38,10 @@
   },
   "devDependencies": {
   },
-  "keywords": []
+  "keywords": [
+    "api",
+    "upyun",
+    "rsync",
+    "cdn"
+  ]
 }

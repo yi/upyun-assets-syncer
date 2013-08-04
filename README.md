@@ -6,9 +6,9 @@ Upyun Assets Syncer
 
 ## 为什么需要这个工具
 
-    * 当CDN上的素材超过10000时，UPYUN的LISTING API无法将超过10000的文件信息返回，FTP亦然
-    * 当本地素材发生频繁修改时，需要增量同步工具以减少同步所花费的时间
-    * 当本地素材的同步时，需要配合特定的文件过滤逻辑时
+* 当CDN上的素材超过10000时，UPYUN的LISTING API无法将超过10000的文件信息返回，FTP亦然
+* 当本地素材发生频繁修改时，需要增量同步工具以减少同步所花费的时间
+* 当本地素材的同步时，需要配合特定的文件过滤逻辑时
 
 这个工具是对 find + rsync 的扩展性补充。
 
@@ -61,21 +61,37 @@ Upyun Assets Syncer
 其中：
 
 
-**LOCAL_DEPOT_ROOT:String** 同步素材所在的根目录，其下的子目录将被遍历
+**LOCAL_DEPOT_ROOT:String**
 
-**REGEX_FILE_NAME:RegExp** 一个过滤文件名的正则表达式，只有满足表达式条件的文件才会被添加到同步的检查列表中。如果不提供这个设置，那么根目录下遍历到的所有文件将被进行同步
+同步素材所在的根目录，其下的子目录将被遍历
 
-**BUCKETNAME:String** UPYUN API 的 bucket name
+**REGEX_FILE_NAME:RegExp**
 
-**USERNAME:String** UPYUN API 的 user name
+一个过滤文件名的正则表达式，只有满足表达式条件的文件才会被添加到同步的检查列表中。如果不提供这个设置，那么根目录下遍历到的所有文件将被进行同步
 
-**PASSWORD:String** UPYUN API 的 password
+**BUCKETNAME:String**
 
-**REVISION_SENSITIVE:Boolean** 当True时，将对本地文件和服务器文件做 md5 比对，md5 不同的话，将会把本地文件重新上传 upyun
+UPYUN API 的 bucket name
 
-**PARALLELY:Boolean** 当 True 时，将会采用并发操作，对于大文件量时，可以有效提高速度，但是在老版本的 NodeJS 上会遇到 http parse error
+**USERNAME:String**
 
-**VERBOSE:Boolean** 当 True 时，将输出操作中的具体调试信息
+UPYUN API 的 user name
+
+**PASSWORD:String**
+
+UPYUN API 的 password
+
+**REVISION_SENSITIVE:Boolean**
+
+当True时，将对本地文件和服务器文件做 md5 比对，md5 不同的话，将会把本地文件重新上传 upyun
+
+**PARALLELY:Boolean**
+
+当 True 时，将会采用并发操作，对于大文件量时，可以有效提高速度，但是在老版本的 NodeJS 上会遇到 http parse error
+
+**VERBOSE:Boolean**
+
+当 True 时，将输出操作中的具体调试信息
 
 
 

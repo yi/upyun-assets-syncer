@@ -1,6 +1,6 @@
 {
   "name": "upyun-assets-syncer",
-  "description": "a configurable node script to synce local assets to upyun cdn, compared by md5. 一个可配置的又拍云素材同步工具，通过MD5比对进行增量同步",
+  "description": "a configurable node script to synce local assets to upyun cdn, compared by md5.",
   "version": "0.1.0",
   "homepage": "https://github.com/yi/upyun-assets-syncer",
   "author": {

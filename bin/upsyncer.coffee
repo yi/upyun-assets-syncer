@@ -1,11 +1,11 @@
 #!/usr/bin/env coffee
 
 ##
-# cdn-syncer
-# na
+# upyun-assets-syncer
+# a configurable node script to synce local assets to upyun cdn, compared by md5
 #
 # Copyright (c) 2013 yi
-# Licensed under the na license.
+# Licensed under the MIT license.
 ##
 
 fs = require "fs"

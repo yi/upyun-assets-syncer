@@ -37,7 +37,7 @@ settings =
 
   # 加载外部配置的帮助方法
   load: (filePath) ->
-    logger.log "[environment::load] filePath:#{filePath}"
+    #logger.log "[environment::load] filePath:#{filePath}"
 
     #data = JSON.parse(fs.readFileSync(filePath))
     data = fs.readFileSync(filePath).toString()
@@ -70,14 +70,14 @@ p.version('0.1.0')
   .parse(process.argv)
 
 if p.configFile
-  logger.info "[cdn-syncer::init] Load configuration from #{p.configFile}"
+  logger.log "[cdn-syncer::init] Load configuration from #{p.configFile}"
   settings.load p.configFile
 else
   logger.error "[cdn-syncer::init] missing configuration file, please use -c"
   process.exit(1)
 
 logger.setLevel(if settings.VERBOSE then logger.LOG else logger.INFO)
-logger.info "[upsyncer] start synce with following settings, at #{new Date}"
+logger.log "[upsyncer] start synce with following settings, at #{new Date}"
 console.log settings
 
 

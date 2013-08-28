@@ -222,7 +222,7 @@ walker.on "file", (root, fileStats, next) ->
     if settings.REGEX_FILE_NAME.test(fileName)
       assetsKV[fileName] = root
     else
-      logger.warn "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
+      logger.log "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
 
   next()
   return

@@ -78,7 +78,7 @@ else
 
 logger.setLevel(if settings.VERBOSE then logger.LOG else logger.INFO)
 logger.log "[upsyncer] start synce with following settings, at #{new Date}"
-console.log settings
+#console.log settings
 
 
 ## runtime vars

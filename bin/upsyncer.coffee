@@ -35,6 +35,8 @@ settings =
   #REGEX_FILE_NAME : /[a-z0-9]{11}\.sgf/
   REGEX_FILE_NAME : null
 
+  IGNORE_ASSET_MODIFIED_BEFORE: 0
+
   # 加载外部配置的帮助方法
   load: (filePath) ->
     #logger.log "[environment::load] filePath:#{filePath}"
@@ -65,8 +67,9 @@ settings =
 
 ## updating args
 p.version('0.1.0')
-  .option('-c, --config-file [FILE]', 'Configuration json file')
+  .option('-c, --config-file <FILE>', 'Configuration json file')
   .option('-t, --test-drive', 'list all local assets which should be synced withouth uploading them to CDN')
+  #.option('-s, --after-timestamp <date>', 'only sync assets last modified after the given time stamp')
   .parse(process.argv)
 
 if p.configFile
@@ -186,6 +189,7 @@ processAssetNoComprison = (fileName, next)->
       fullPath = "#{assetsKV[fileName]}/#{fileName}"
       uploadAsset(fileName, fs.readFileSync(fullPath), next)
 
+
     return
 
   return
@@ -216,13 +220,17 @@ walker.on "file", (root, fileStats, next) ->
   #logger.log "[cdn-syncer::on file] name:#{fileName}, root:#{root}"
   #console.dir fileStats
 
-  unless settings.REGEX_FILE_NAME
-    assetsKV[fileName] = root
-  else
-    if settings.REGEX_FILE_NAME.test(fileName)
+  #console.log "~~~~~p.afterTimestamp:#{p.afterTimestamp}, fileStats.mtime.getTime():#{fileStats.mtime.getTime()}"
+  #console.log "~~~~~settings.IGNORE_ASSET_MODIFIED_BEFORE:#{settings.IGNORE_ASSET_MODIFIED_BEFORE}, fileStats.mtime.getTime():#{fileStats.mtime.getTime()}"
+
+  if isNaN(settings.IGNORE_ASSET_MODIFIED_BEFORE) or fileStats.mtime.getTime() > settings.IGNORE_ASSET_MODIFIED_BEFORE
+    unless settings.REGEX_FILE_NAME
       assetsKV[fileName] = root
     else
-      logger.log "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
+      if settings.REGEX_FILE_NAME.test(fileName)
+        assetsKV[fileName] = root
+      else
+        logger.log "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
 
   next()
   return

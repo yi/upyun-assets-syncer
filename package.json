@@ -1,7 +1,7 @@
 {
   "name": "upyun-assets-syncer",
   "description": "a configurable node script to synce local assets to upyun cdn, compared by md5.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "homepage": "https://github.com/yi/upyun-assets-syncer",
   "author": {
     "name": "yi",

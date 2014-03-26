@@ -11,7 +11,6 @@
 fs = require "fs"
 p = require "commander"
 walk = require "walk"
-logger = require "dev-logger"
 _ = require "underscore"
 async = require "async"
 checksum = require "checksum"
@@ -39,16 +38,16 @@ settings =
 
   # 加载外部配置的帮助方法
   load: (filePath) ->
-    #logger.log "[environment::load] filePath:#{filePath}"
+    #console.log "[environment::load] filePath:#{filePath}"
 
     #data = JSON.parse(fs.readFileSync(filePath))
     data = fs.readFileSync(filePath).toString()
-    #logger.log "[environment::method] data:#{data}"
+    #console.log "[environment::method] data:#{data}"
     try
       data = eval("function x(){ return " + data + "; }")
       data = x()
     catch err
-      logger.error "[upsyncer::settings::load] bad configuration json file, err:#{err}, input json:#{data}"
+      console.error "[upsyncer::settings::load] bad configuration json file, err:#{err}, input json:#{data}"
       process.exit(1)
       return
 
@@ -73,14 +72,13 @@ p.version('0.1.0')
   .parse(process.argv)
 
 if p.configFile
-  logger.log "[cdn-syncer::init] Load configuration from #{p.configFile}"
+  console.log "[cdn-syncer::init] Load configuration from #{p.configFile}"
   settings.load p.configFile
 else
-  logger.error "[cdn-syncer::init] missing configuration file, please use -c"
+  console.error "[cdn-syncer::init] missing configuration file, please use -c"
   process.exit(1)
 
-logger.setLevel(if settings.VERBOSE then logger.LOG else logger.INFO)
-logger.log "[upsyncer] start synce with following settings, at #{new Date}"
+console.log "[upsyncer] start synce with following settings, at #{new Date}"
 #console.log settings
 
 
@@ -105,7 +103,7 @@ client.getUsage (err, status, data)->
 
 # upload an individual asset to upyun
 uploadAsset = (fileName, contentLocal, next)->
-  logger.log "[upsyncer::uploadAsset] fileName:#{fileName}"
+  console.log "[upsyncer::uploadAsset] fileName:#{fileName}"
 
   if p.testDrive
     next null,
@@ -115,10 +113,10 @@ uploadAsset = (fileName, contentLocal, next)->
 
   client.uploadFile fileName, contentLocal, (err, status, data)->
     if err? or status isnt 200
-      #logger.error "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
+      #console.error "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
       next "[upsyncer::uploadAsset] failed. err:#{err}, status:#{status}"
     else
-      logger.info "[upsyncer::processAsset::upload] put asset:#{fileName}"
+      console.info "[upsyncer::processAsset::upload] put asset:#{fileName}"
       next null,
         'status' : status
         'fileName' : fileName
@@ -129,7 +127,7 @@ uploadAsset = (fileName, contentLocal, next)->
 
 # process an individual asset
 processAsset = (fileName, next)->
-  logger.info "[upsyncer::processAsset] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
+  console.info "[upsyncer::processAsset] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
 
   fullPath = "#{assetsKV[fileName]}/#{fileName}"
 
@@ -139,7 +137,7 @@ processAsset = (fileName, next)->
 
   client.downloadFile fileName, (err, status, contentRemote) ->
 
-    logger.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
+    console.log "[upsyncer::processAsset::downloadFile] err:#{err}, status:#{status}"
 
     switch status
       when 404
@@ -148,7 +146,7 @@ processAsset = (fileName, next)->
       when 200
         # file exist on cdn, skip
         unless settings.UPLOAD_NEWLY_ASSET
-          logger.log "[upsyncer::processAsset::upload] skip asset:#{fileName}"
+          console.log "[upsyncer::processAsset::upload] skip asset:#{fileName}"
           next null
 
         sumRemote = checksum(contentRemote)
@@ -157,12 +155,12 @@ processAsset = (fileName, next)->
         # ty 2013-08-04
 
         if sumRemote is sumLocal
-          logger.log "[upsyncer::processAsset::upload] ignore identical asset:#{fileName}"
+          console.log "[upsyncer::processAsset::upload] ignore identical asset:#{fileName}"
           next null
         else
-          logger.log "[upsyncer::processAsset::upload] upload diff asset:#{fileName}, lengthLocal:#{contentLocal.length}, lengthRemote:#{contentRemote.length}, iden:#{contentLocal.length is contentRemote.length}, sumLocal:#{sumLocal}, sumRemote:#{sumRemote}"
-          #logger.log "[upsyncer::method] contentLocal:#{Buffer.isBuffer(contentLocal)}"
-          #logger.log "[upsyncer::method] contentRemot:#{typeof(contentRemote)}"
+          console.log "[upsyncer::processAsset::upload] upload diff asset:#{fileName}, lengthLocal:#{contentLocal.length}, lengthRemote:#{contentRemote.length}, iden:#{contentLocal.length is contentRemote.length}, sumLocal:#{sumLocal}, sumRemote:#{sumRemote}"
+          #console.log "[upsyncer::method] contentLocal:#{Buffer.isBuffer(contentLocal)}"
+          #console.log "[upsyncer::method] contentRemot:#{typeof(contentRemote)}"
           uploadAsset(fileName, contentLocal, next)
 
       else
@@ -175,14 +173,14 @@ processAsset = (fileName, next)->
 
 # process an individual asset
 processAssetNoComprison = (fileName, next)->
-  logger.info "[upsyncer::processAssetNoComprison] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
+  console.info "[upsyncer::processAssetNoComprison] progress:#{++countProgress}/#{countAssets} - fileName:#{fileName}"
 
   client.checkFileExistence fileName, (err, isExist) ->
-    logger.log "[upsyncer::processAssetNoComprison] err:#{err}, isExist:#{isExist}, fileName:#{fileName}"
+    console.log "[upsyncer::processAssetNoComprison] err:#{err}, isExist:#{isExist}, fileName:#{fileName}"
 
     console.trace() if err?
     if isExist
-      logger.log "[upsyncer::processAssetNoComprison] skip existing asset:#{fileName}"
+      console.log "[upsyncer::processAssetNoComprison] skip existing asset:#{fileName}"
       next(null)
       return
     else
@@ -202,22 +200,22 @@ generateResult = (err, results)->
       ids.push entry.fileName
 
   unless p.testDrive
-    logger.info "[upsyncer::generateResult] SYNC COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset uploaded:#{ids}"
+    console.info "[upsyncer::generateResult] SYNC COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset uploaded:#{ids}"
   else
-    logger.info "[upsyncer::generateResult] CHECKING COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset should be synced:#{ids}"
+    console.info "[upsyncer::generateResult] CHECKING COMPLETE. revision sensitive:#{settings.REVISION_SENSITIVE}, #{ids.length} asset should be synced:#{ids}"
 
   process.exit(0)
   return
 
 ## starting job
-logger.log "[cdn-syncer::start] find all sgf files from #{settings.LOCAL_DEPOT_ROOT}"
+console.log "[cdn-syncer::start] find all sgf files from #{settings.LOCAL_DEPOT_ROOT}"
 
 # listing assets files
 walker = walk.walk(settings.LOCAL_DEPOT_ROOT, settings.WALK_OPTIONS)
 
 walker.on "file", (root, fileStats, next) ->
   fileName = fileStats.name
-  #logger.log "[cdn-syncer::on file] name:#{fileName}, root:#{root}"
+  #console.log "[cdn-syncer::on file] name:#{fileName}, root:#{root}"
   #console.dir fileStats
 
   #console.log "~~~~~p.afterTimestamp:#{p.afterTimestamp}, fileStats.mtime.getTime():#{fileStats.mtime.getTime()}"
@@ -230,13 +228,13 @@ walker.on "file", (root, fileStats, next) ->
       if settings.REGEX_FILE_NAME.test(fileName)
         assetsKV[fileName] = root
       else
-        logger.log "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
+        console.log "[cdn-syncer::on file] ignore invalid asset:#{fileName}"
 
   next()
   return
 
 walker.on "errors", (root, nodeStatsArray, next) ->
-  logger.error "[cdn-syncer::on error] #{arguments}"
+  console.error "[cdn-syncer::on error] #{arguments}"
   process.exit(1)
   return
 
@@ -245,7 +243,7 @@ walker.on "end", ->
   countAssets = assetsList.length
   countProgress = 0
 
-  logger.log "[cdn-syncer::list file] file #{countAssets} assets, time spent:#{Date.now() - startAt} ms"
+  console.log "[cdn-syncer::list file] file #{countAssets} assets, time spent:#{Date.now() - startAt} ms"
   #process.exit(0)
 
   processer = if settings.REVISION_SENSITIVE then processAsset else processAssetNoComprison
